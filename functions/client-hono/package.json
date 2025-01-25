@@ -2,10 +2,7 @@
   "name": "client-hono",
   "private": true,
   "scripts": {
-    "deploy": "wrangler deploy",
     "dev": "wrangler dev",
-    "start": "wrangler dev",
-    "test": "vitest",
     "cf-typegen": "wrangler types",
     "tailwind": "tailwindcss -i src/tailwind.css -o public/tailwind.css --watch",
     "build": "tailwindcss -i src/tailwind.css -o public/tailwind.css",

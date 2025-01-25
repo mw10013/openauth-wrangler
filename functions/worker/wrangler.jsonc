@@ -1,0 +1,47 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "openauth-wrangler-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-01-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "ENVIRONMENT": "local"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "<NAMESPACE_ID1>"
+    }
+  ],
+  "env": {
+    "staging": {
+      "vars": {
+        "ENVIRONMENT": "staging"
+      },
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+          "id": "e04ef1bfdd06484da42362681e16bc42" // openauth-wrangler-worker-kv-staging
+        }
+      ]
+    },
+    "production": {
+      "vars": {
+        "ENVIRONMENT": "production"
+      },
+      "kv_namespaces": [
+        {
+          "binding": "KV",
+          "id": "5350292b4ad4483c86336ba1fe32fe8d" // openauth-wrangler-worker-kv-production
+        }
+      ]
+    }
+  }
+}
