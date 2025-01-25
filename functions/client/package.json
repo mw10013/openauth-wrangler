@@ -1,0 +1,30 @@
+{
+  "name": "client",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "test": "vitest",
+    "cf-typegen": "wrangler types",
+    "tailwind": "tailwindcss -i src/tailwind.css -o public/tailwind.css --watch",
+    "build": "tailwindcss -i src/tailwind.css -o public/tailwind.css",
+    "clean": "rm -rf node_modules && rm -rf .wrangler"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20250121.0",
+    "@tailwindcss/cli": "^4.0.0",
+    "@tailwindcss/typography": "^0.5.16",
+    "daisyui": "5.0.0-beta.2",
+    "tailwindcss": "^4.0.0",
+    "typescript": "catalog:",
+    "wrangler": "catalog:"
+  },
+  "dependencies": {
+    "hono": "^4.6.18"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=23.6.1"
+  }
+}

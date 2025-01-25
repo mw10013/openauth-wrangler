@@ -1,0 +1,16 @@
+{
+  "name": "openauth-wrangler",
+  "private": true,
+  "description": "",
+  "scripts": {
+    "clean": "rm -rf node_modules && pnpm -r clean",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=23.6.1"
+  }
+}
