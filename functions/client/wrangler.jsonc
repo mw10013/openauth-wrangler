@@ -4,7 +4,7 @@
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "openauth-wrangler-client-hono",
+  "name": "openauth-wrangler-client",
   "main": "src/index.tsx",
   "compatibility_date": "2025-01-21",
   "compatibility_flags": ["nodejs_compat"],
