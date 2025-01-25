@@ -6,6 +6,9 @@ settings:
 
 catalogs:
   default:
+    '@openauthjs/openauth':
+      specifier: 0.3.6
+      version: 0.3.6
     typescript:
       specifier: 5.7.3
       version: 5.7.3
@@ -49,7 +52,7 @@ importers:
   functions/worker:
     dependencies:
       '@openauthjs/openauth':
-        specifier: ^0.3.6
+        specifier: 'catalog:'
         version: 0.3.6(arctic@2.3.4)(hono@4.6.18)
       hono:
         specifier: ^4.6.17

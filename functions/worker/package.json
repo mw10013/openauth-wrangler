@@ -1,12 +1,12 @@
 {
   "name": "worker",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --port 8788",
     "clean": "rm -rf node_modules && rm -rf .wrangler",
     "types": "wrangler types ./types/worker-configuration.d.ts --experimental-include-runtime ./types/runtime.d.ts "
   },
   "dependencies": {
-    "@openauthjs/openauth": "^0.3.6",
+    "@openauthjs/openauth": "catalog:",
     "hono": "^4.6.17",
     "valibot": "1.0.0-beta.12"
   },
