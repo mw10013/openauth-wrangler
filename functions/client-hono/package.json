@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "client-hono",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",

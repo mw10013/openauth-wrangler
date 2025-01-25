@@ -2,9 +2,9 @@
 
 ## Client
 
-- pnpm -F client dev
-- pnpm -F client tailwind
-- pnpm -F client exec wrangler ...
+- pnpm -F client-hono dev
+- pnpm -F client-hono tailwind
+- pnpm -F client-hono exec wrangler ...
 
 ## Prettier
 
