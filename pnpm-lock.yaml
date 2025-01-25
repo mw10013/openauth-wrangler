@@ -61,9 +61,6 @@ importers:
         specifier: 1.0.0-beta.12
         version: 1.0.0-beta.12(typescript@5.7.3)
     devDependencies:
-      '@cloudflare/workers-types':
-        specifier: 4.20250121.0
-        version: 4.20250121.0
       typescript:
         specifier: 'catalog:'
         version: 5.7.3

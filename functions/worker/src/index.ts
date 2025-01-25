@@ -1,18 +1,18 @@
 import { issuer } from "@openauthjs/openauth";
 import { CloudflareStorage } from "@openauthjs/openauth/storage/cloudflare";
-import {
-  type ExecutionContext,
-  type KVNamespace,
-} from "@cloudflare/workers-types";
+// import {
+//   type ExecutionContext,
+//   type KVNamespace,
+// } from "@cloudflare/workers-types";
 import { subjects } from "./subjects.js";
 import { PasswordProvider } from "@openauthjs/openauth/provider/password";
 import { PasswordUI } from "@openauthjs/openauth/ui/password";
 import { Hono } from "hono";
 import { Client, createClient } from "@openauthjs/openauth/client";
 
-interface Env {
-  KV: KVNamespace;
-}
+// interface Env {
+//   KV: KVNamespace;
+// }
 
 async function getUser(email: string) {
   // Get user from database
@@ -22,6 +22,7 @@ async function getUser(email: string) {
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    console.log({ env: env.ENVIRONMENT });
     const openauth = issuer({
       storage: CloudflareStorage({
         namespace: env.KV,
