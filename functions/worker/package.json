@@ -8,8 +8,7 @@
   "dependencies": {
     "@openauthjs/openauth": "catalog:",
     "@repo/shared": "workspace:*",
-    "hono": "^4.6.17",
-    "valibot": "1.0.0-beta.12"
+    "hono": "catalog:"
   },
   "devDependencies": {
     "typescript": "catalog:",

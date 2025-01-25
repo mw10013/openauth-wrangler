@@ -18,6 +18,8 @@
     "wrangler": "catalog:"
   },
   "dependencies": {
-    "hono": "^4.6.18"
+    "@openauthjs/openauth": "catalog:",
+    "@repo/shared": "workspace:*",
+    "hono": "catalog:"
   }
 }
