@@ -15,6 +15,7 @@
 ### Build & deploy commands
 
 - Deploy command: pnpm -F worker exec wrangler deploy --env production
+- Build watch paths: include: functions/worker/* functions/shared/*
 
 ## Client
 
@@ -31,6 +32,7 @@
 
 - Build command: pnpm -F client build
 - Deploy command: pnpm -F client exec wrangler deploy --env production
+- Build watch paths: include: functions/client/* functions/shared/*
 
 # pnpm
 
