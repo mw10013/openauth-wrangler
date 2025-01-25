@@ -1,0 +1,20 @@
+{
+  "name": "@repo/shared",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./subjects": "./src/subjects.ts"
+  },
+  "scripts": {
+    "clean": "rm -rf node_modules"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  },
+  "dependencies": {
+    "valibot": "1.0.0-beta.12"
+  },
+  "peerDependencies": {
+    "@openauthjs/openauth": "catalog:"
+  }
+}
