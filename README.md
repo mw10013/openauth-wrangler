@@ -23,3 +23,8 @@
 # pnpm
 
 - pnpm list -r typescript
+
+## Node version for build and scripts
+
+- See .node-version in root.
+- https://github.com/shadowspawn/node-version-usage
