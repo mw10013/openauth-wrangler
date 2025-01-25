@@ -15,6 +15,9 @@ dist
 .wrangler/
 .dev.vars
 
+# Generated
+functions/client/public/tailwind.css
+
 # Tests
 test-results/
 playwright-report/
