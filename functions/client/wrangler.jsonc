@@ -28,12 +28,24 @@
     "staging": {
       "vars": {
         "ENVIRONMENT": "staging"
-      }
+      },
+      "services": [
+        {
+          "binding": "WORKER",
+          "service": "openauth-wrangler-worker-staging"
+        }
+      ]
     },
     "production": {
       "vars": {
         "ENVIRONMENT": "production"
-      }
+      },
+      "services": [
+        {
+          "binding": "WORKER",
+          "service": "openauth-wrangler-worker-production"
+        }
+      ]
     }
   }
 }
