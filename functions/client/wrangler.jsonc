@@ -16,7 +16,8 @@
     "enabled": true
   },
   "vars": {
-    "ENVIRONMENT": "local"
+    "ENVIRONMENT": "local",
+    "OPENAUTH_ISSUER": "http://localhost:8788"
   },
   "services": [
     {
@@ -27,7 +28,8 @@
   "env": {
     "staging": {
       "vars": {
-        "ENVIRONMENT": "staging"
+        "ENVIRONMENT": "staging",
+        "OPENAUTH_ISSUER": "https://openauth-wrangler-worker-staging.devxo.workers.dev"
       },
       "services": [
         {
@@ -38,7 +40,8 @@
     },
     "production": {
       "vars": {
-        "ENVIRONMENT": "production"
+        "ENVIRONMENT": "production",
+        "OPENAUTH_ISSUER": "https://openauth-wrangler-worker-production.devxo.workers.dev"
       },
       "services": [
         {

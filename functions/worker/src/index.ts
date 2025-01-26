@@ -60,7 +60,6 @@ export default {
       c.set("redirectUri", origin + "/fe/callback");
       await next();
     });
-
     fe.get("/callback", async (c) => {
       try {
         const url = new URL(c.req.url);
@@ -106,12 +105,11 @@ export default {
     });
 
     const app = new Hono();
-    app.get("/foo", async (c) => c.text("bar"));
     app.route("/", fe);
     app.route("/", openauth); // Mount last
     return app.fetch(request, env, ctx);
   },
-};
+} satisfies ExportedHandler<Env>;
 
 // https://github.com/openauthjs/openauth/blob/master/examples/client/cloudflare-api/api.ts
 function setSession(response: Response, access: string, refresh: string) {
