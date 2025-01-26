@@ -14,7 +14,6 @@ async function getUser(email: string) {
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
-    console.log({ env: env.ENVIRONMENT });
     const openauth = issuer({
       storage: CloudflareStorage({
         namespace: env.KV,
@@ -107,6 +106,7 @@ export default {
     });
 
     const app = new Hono();
+    app.get("/foo", async (c) => c.text("bar"));
     app.route("/", fe);
     app.route("/", openauth); // Mount last
     return app.fetch(request, env, ctx);

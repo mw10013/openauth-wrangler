@@ -18,6 +18,12 @@
   "vars": {
     "ENVIRONMENT": "local"
   },
+  "services": [
+    {
+      "binding": "WORKER",
+      "service": "openauth-wrangler-worker"
+    }
+  ],
   "env": {
     "staging": {
       "vars": {

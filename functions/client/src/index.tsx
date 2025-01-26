@@ -51,6 +51,7 @@ export default {
 				</div>,
 			)
 		})
+		app.get('/foo', async (c) => env.WORKER.fetch(c.req.raw))
 
 		return app.fetch(request, env, ctx)
 	},

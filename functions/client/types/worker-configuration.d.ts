@@ -2,5 +2,6 @@
 
 interface Env {
 	ENVIRONMENT: "local" | "staging" | "production";
+	WORKER: Fetcher;
 	ASSETS: Fetcher;
 }
