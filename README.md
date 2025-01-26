@@ -1,40 +1,39 @@
 # openauth-wrangler
 
-## Worker
+## Local Dev
 
 - pnpm -F worker dev
-- pnpm -F worker exec wrangler ...
-
-### Deploy
-
-- pnpm -F worker exec wrangler kv namespace create kv-staging
-- pnpm -F worker exec wrangler deploy --env staging
-- pnpm -F worker exec wrangler kv namespace create kv-production
-- pnpm -F worker exec wrangler deploy --env production
-
-### Build & deploy commands
-
-- Deploy command: pnpm -F worker exec wrangler deploy --env production
-- Build watch paths: include: functions/worker/* functions/shared/*
-
-## Client
-
-- pnpm -F client dev
 - pnpm -F client tailwind
-- pnpm -F client exec wrangler ...
+- pnpm -F client dev
 
-### Deploy
+## Deploy (production)
 
+- pnpm -F worker exec wrangler kv namespace create kv-production
+- Update worker/wrangler.jsonc with production kv id
+- pnpm -F worker exec wrangler deploy --env production
+- Workers & Pages Settings: openauth-wrangler-worker-production
+  - Git repository: connect to git repo
+  - Build configuration
+    - Deploy command: pnpm -F worker exec wrangler deploy --env production
+  - Build watch paths
+    - Include paths: functions/worker/* functions/shared/*
 - pnpm -F client build
 - pnpm -F client exec wrangler deploy --env production
+- Workers & Pages Settings: openauth-wrangler-client-production
+  - Git repository: connect to git repo
+  - Build configuration
+    - Build command: pnpm -F client build
+    - Deploy command: pnpm -F client exec wrangler deploy --env production
+  - Build watch paths
+    - Include paths: functions/client/* functions/shared/*
 
-### Build & deploy commands
+## Deploy (staging)
 
-- Build command: pnpm -F client build
-- Deploy command: pnpm -F client exec wrangler deploy --env production
-- Build watch paths: include: functions/client/* functions/shared/*
+- Steps of Deploy (production) substituting staging for production
+- Workers & Pages Settings: openauth-wrangler-worker-staging/openauth-wrangler-client-production
+  - Branch control: staging
 
-# pnpm
+## pnpm
 
 - pnpm list -r typescript
 
