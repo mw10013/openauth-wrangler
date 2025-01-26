@@ -7,6 +7,9 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
+    "prettier": "3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.11",
     "typescript": "catalog:"
   },
   "packageManager": "pnpm@9.15.4",
