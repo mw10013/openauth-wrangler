@@ -16,7 +16,7 @@ dist
 .dev.vars
 
 # Generated
-functions/client-hono/public/tailwind.css
+functions/client/public/tailwind.css
 
 # Tests
 test-results/
