@@ -1,5 +1,5 @@
 import type { FC } from 'hono/jsx'
-import { Client, createClient } from '@openauthjs/openauth/client'
+import { Client, createClient, VerifyResult } from '@openauthjs/openauth/client'
 import { subjects } from '@repo/shared/subjects'
 import { Hono } from 'hono'
 import { getCookie } from 'hono/cookie'
@@ -9,7 +9,21 @@ type HonoEnv = {
 	Variables: {
 		client: Client
 		redirectUri: string
+		verifyResult?: VerifyResult<typeof subjects>
 	}
+}
+
+const VerifyResultCard: FC = () => {
+	const ctx = useRequestContext<HonoEnv>()
+	const verifyResult = ctx.get('verifyResult')
+	return (
+		<div className="card bg-base-100 w-96 shadow-sm">
+			<div className="card-body">
+				<h2 className="card-title">Verify Result</h2>
+				<pre>{JSON.stringify(verifyResult, null, 2)}</pre>
+			</div>
+		</div>
+	)
 }
 
 const CookiesCard: FC = () => {
@@ -44,11 +58,27 @@ export default {
 			})
 			c.set('client', client)
 			c.set('redirectUri', new URL(c.req.url).origin + '/callback')
+			const { access_token, refresh_token } = getCookie(c)
+			console.log({ access_token, refresh_token })
+			if (access_token && refresh_token) {
+				const verified = await client.verify(subjects, access_token, {
+					refresh: refresh_token,
+					fetch: (input, init) => env.WORKER.fetch(input, init),
+				})
+				if (!verified.err) {
+					c.set('verifyResult', verified)
+				}
+			}
 			await next()
+			if (c.var.verifyResult?.tokens) {
+				console.log({ log: 'Saving tokens', verifyResult: c.var.verifyResult })
+				setSession(c.res, c.var.verifyResult.tokens.access, c.var.verifyResult.tokens.refresh)
+			}
 		})
 		app.get(
 			'/*',
 			jsxRenderer(({ children }) => {
+				const ctx = useRequestContext<HonoEnv>()
 				return (
 					<html>
 						<head>
@@ -90,6 +120,7 @@ export default {
 									</ul>
 								</div>
 								<div className="navbar-end">
+									{ctx.var.verifyResult ? 'Sign Out' : 'Sign In / Up'}
 									<a className="btn">Button</a>
 								</div>
 							</div>
@@ -99,13 +130,13 @@ export default {
 				)
 			}),
 		)
-		app.get('/', (c) => {
-			return c.render('')
-		})
+		app.get('/', (c) => c.render(<VerifyResultCard />))
 		app.get('/public', (c) => c.render(<CookiesCard />))
 		app.get('/protected', (c) => c.render('Protected'))
+		app.get('/authorize', async (c) => Response.redirect(await c.var.client.authorize(c.var.redirectUri, 'code').then((v) => v.url), 302))
 		app.get('/callback', async (c) => {
 			try {
+				c.set('verifyResult', undefined)
 				const url = new URL(c.req.url)
 				const code = url.searchParams.get('code')!
 				// The redirectUri is the original redirectUri you passed in during authorization and is used for verification
@@ -119,7 +150,6 @@ export default {
 				return new Response(e.toString())
 			}
 		})
-		app.get('/authorize', async (c) => Response.redirect(await c.var.client.authorize(c.var.redirectUri, 'code').then((v) => v.url), 302))
 
 		const fe = new Hono<{
 			Variables: {
