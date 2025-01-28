@@ -1,4 +1,4 @@
-import type { FC } from 'hono/jsx'
+import type { FC, PropsWithChildren } from 'hono/jsx'
 import { Client, createClient, VerifyResult } from '@openauthjs/openauth/client'
 import { subjects } from '@repo/shared/subjects'
 import { Context, Hono } from 'hono'
@@ -21,8 +21,8 @@ export default {
 			c.set('cfEnv', env)
 			const client = createClient({
 				clientID: 'client',
-				fetch: (input, init) => env.WORKER.fetch(input, init),
 				issuer: env.OPENAUTH_ISSUER,
+				fetch: (input, init) => env.WORKER.fetch(input, init),
 			})
 			c.set('client', client)
 			c.set('redirectUri', new URL(c.req.url).origin + '/callback')
@@ -51,65 +51,7 @@ export default {
 		})
 		app.get(
 			'/*',
-			jsxRenderer(({ children }) => {
-				const ctx = useRequestContext<HonoEnv>()
-				return (
-					<html>
-						<head>
-							<meta charset="UTF-8" />
-							<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-							<link href="./tailwind.css" rel="stylesheet" />
-							<title>OpenAUTH Client</title>
-						</head>
-						<body>
-							<div className="navbar bg-base-100 shadow-sm">
-								<div className="navbar-start">
-									<div className="dropdown">
-										<div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
-											<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-												<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
-											</svg>
-										</div>
-										<ul tabIndex={0} class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-											<li>
-												<a href="/public">Public</a>
-											</li>
-											<li>
-												<a href="/protected">Protected</a>
-											</li>
-										</ul>
-									</div>
-									<a href="/" className="btn btn-ghost text-xl">
-										OpenAUTH Client
-									</a>
-								</div>
-								<div className="navbar-center hidden lg:flex">
-									<ul className="menu menu-horizontal px-1">
-										<li>
-											<a href="/public">Public</a>
-										</li>
-										<li>
-											<a href="/protected">Protected</a>
-										</li>
-									</ul>
-								</div>
-								<div className="navbar-end">
-									{ctx.var.verifyResult ? (
-										<a href="/signout" className="btn">
-											Sign Out
-										</a>
-									) : (
-										<a href="/authorize" className="btn">
-											Sign In / Up
-										</a>
-									)}
-								</div>
-							</div>
-							<div className="p-6">{children}</div>
-						</body>
-					</html>
-				)
-			}),
+			jsxRenderer(({ children }) => <Layout>{children}</Layout>),
 		)
 		app.get('/', (c) => c.render(<VerifyResultCard />))
 		app.get('/public', (c) => c.render(<CookiesCard />))
@@ -139,10 +81,69 @@ export default {
 				return new Response(e.toString())
 			}
 		})
-
 		return app.fetch(request, env, ctx)
 	},
 } satisfies ExportedHandler<Env>
+
+const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
+	const ctx = useRequestContext<HonoEnv>()
+	return (
+		<html>
+			<head>
+				<meta charset="UTF-8" />
+				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+				<link href="./tailwind.css" rel="stylesheet" />
+				<title>OpenAUTH Client</title>
+			</head>
+			<body>
+				<div className="navbar bg-base-100 shadow-sm">
+					<div className="navbar-start">
+						<div className="dropdown">
+							<div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
+								<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h8m-8 6h16" />
+								</svg>
+							</div>
+							<ul tabIndex={0} class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
+								<li>
+									<a href="/public">Public</a>
+								</li>
+								<li>
+									<a href="/protected">Protected</a>
+								</li>
+							</ul>
+						</div>
+						<a href="/" className="btn btn-ghost text-xl">
+							OpenAUTH Client
+						</a>
+					</div>
+					<div className="navbar-center hidden lg:flex">
+						<ul className="menu menu-horizontal px-1">
+							<li>
+								<a href="/public">Public</a>
+							</li>
+							<li>
+								<a href="/protected">Protected</a>
+							</li>
+						</ul>
+					</div>
+					<div className="navbar-end">
+						{ctx.var.verifyResult ? (
+							<a href="/signout" className="btn">
+								Sign Out
+							</a>
+						) : (
+							<a href="/authorize" className="btn">
+								Sign In / Up
+							</a>
+						)}
+					</div>
+				</div>
+				<div className="p-6">{children}</div>
+			</body>
+		</html>
+	)
+}
 
 const VerifyResultCard: FC = () => {
 	const ctx = useRequestContext<HonoEnv>()
