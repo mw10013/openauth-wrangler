@@ -1,56 +1,24 @@
 import type { FC } from 'hono/jsx'
 import { Client, createClient, VerifyResult } from '@openauthjs/openauth/client'
 import { subjects } from '@repo/shared/subjects'
-import { Hono } from 'hono'
-import { deleteCookie, getCookie } from 'hono/cookie'
+import { Context, Hono } from 'hono'
+import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 
 type HonoEnv = {
 	Variables: {
+		cfEnv: Env
 		client: Client
 		redirectUri: string
 		verifyResult?: VerifyResult<typeof subjects>
 	}
 }
 
-const VerifyResultCard: FC = () => {
-	const ctx = useRequestContext<HonoEnv>()
-	const verifyResult = ctx.get('verifyResult')
-	return (
-		<div className="card bg-base-100 w-96 shadow-sm">
-			<div className="card-body">
-				<h2 className="card-title">Verify Result</h2>
-				<pre>{JSON.stringify(verifyResult, null, 2)}</pre>
-			</div>
-		</div>
-	)
-}
-
-const CookiesCard: FC = () => {
-	const ctx = useRequestContext<HonoEnv>()
-	const cookies = getCookie(ctx)
-	return (
-		<div className="card bg-base-100 w-96 shadow-sm">
-			<div className="card-body">
-				<h2 className="card-title">Cookies</h2>
-				<ul className="space-y-2 overflow-auto">
-					{Object.entries(cookies).map(([key, value]) => {
-						return (
-							<li>
-								{key}: {value}
-							</li>
-						)
-					})}
-				</ul>
-			</div>
-		</div>
-	)
-}
-
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const app = new Hono<HonoEnv>()
 		app.use(async (c, next) => {
+			c.set('cfEnv', env)
 			const client = createClient({
 				clientID: 'client',
 				fetch: (input, init) => env.WORKER.fetch(input, init),
@@ -58,22 +26,21 @@ export default {
 			})
 			c.set('client', client)
 			c.set('redirectUri', new URL(c.req.url).origin + '/callback')
-			const { access_token, refresh_token } = getCookie(c)
-			if (access_token && refresh_token) {
-				const verified = await client.verify(subjects, access_token, {
-					refresh: refresh_token,
+			const { accessToken, refreshToken } = getCookie(c)
+			if (accessToken && refreshToken) {
+				const verified = await client.verify(subjects, accessToken, {
+					refresh: refreshToken,
 					fetch: (input, init) => env.WORKER.fetch(input, init),
 				})
 				if (verified.err) {
-					deleteCookie(c, 'access_token')
-					deleteCookie(c, 'refresh_token')
+					deleteTokenCookies(c)
 				} else {
 					c.set('verifyResult', verified)
 				}
 			}
 			await next()
 			if (c.var.verifyResult?.tokens) {
-				setSession(c.res, c.var.verifyResult.tokens.access, c.var.verifyResult.tokens.refresh)
+				setTokenCookies(c, c.var.verifyResult.tokens.access, c.var.verifyResult.tokens.refresh)
 			}
 		})
 		app.use('/protected/*', async (c, next) => {
@@ -156,22 +123,18 @@ export default {
 		})
 		app.get('/signout', (c) => {
 			c.set('verifyResult', undefined)
-			deleteCookie(c, 'access_token')
-			deleteCookie(c, 'refresh_token')
+			deleteTokenCookies(c)
 			return c.redirect('/')
 		})
 		app.get('/callback', async (c) => {
 			try {
 				c.set('verifyResult', undefined)
-				const url = new URL(c.req.url)
-				const code = url.searchParams.get('code')!
-				// The redirectUri is the original redirectUri you passed in during authorization and is used for verification
+				const code = c.req.query('code')
+				if (!code) throw new Error('Missing code')
 				const exchanged = await c.var.client.exchange(code, c.var.redirectUri)
-				if (exchanged.err) throw new Error('Invalid code')
-				const response = new Response(null, { status: 302, headers: {} })
-				response.headers.set('Location', `${url.origin}`)
-				setSession(response, exchanged.tokens.access, exchanged.tokens.refresh)
-				return response
+				if (exchanged.err) throw exchanged.err
+				setTokenCookies(c, exchanged.tokens.access, exchanged.tokens.refresh)
+				return c.redirect('/')
 			} catch (e: any) {
 				return new Response(e.toString())
 			}
@@ -181,12 +144,53 @@ export default {
 	},
 } satisfies ExportedHandler<Env>
 
-// https://github.com/openauthjs/openauth/blob/master/examples/client/cloudflare-api/api.ts
-function setSession(response: Response, access: string, refresh: string) {
-	if (access) {
-		response.headers.append('Set-Cookie', `access_token=${access}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2147483647`)
-	}
-	if (refresh) {
-		response.headers.append('Set-Cookie', `refresh_token=${refresh}; HttpOnly; SameSite=Strict; Path=/; Max-Age=2147483647`)
-	}
+const VerifyResultCard: FC = () => {
+	const ctx = useRequestContext<HonoEnv>()
+	const verifyResult = ctx.get('verifyResult')
+	return (
+		<div className="card bg-base-100 w-96 shadow-sm">
+			<div className="card-body">
+				<h2 className="card-title">Verify Result</h2>
+				<pre>{JSON.stringify(verifyResult, null, 2)}</pre>
+			</div>
+		</div>
+	)
+}
+
+const CookiesCard: FC = () => {
+	const ctx = useRequestContext<HonoEnv>()
+	const cookies = getCookie(ctx)
+	return (
+		<div className="card bg-base-100 w-96 shadow-sm">
+			<div className="card-body">
+				<h2 className="card-title">Cookies</h2>
+				<ul className="space-y-2 overflow-auto">
+					{Object.entries(cookies).map(([key, value]) => {
+						return (
+							<li>
+								{key}: {value}
+							</li>
+						)
+					})}
+				</ul>
+			</div>
+		</div>
+	)
+}
+
+function setTokenCookies(c: Context<HonoEnv>, accessToken: string, refreshToken: string) {
+	const options = {
+		path: '/',
+		secure: c.var.cfEnv.ENVIRONMENT != 'local',
+		httpOnly: true,
+		maxAge: 60 * 5,
+		sameSite: 'Strict',
+	} as const
+	setCookie(c, 'accessToken', accessToken, options)
+	setCookie(c, 'refreshToken', refreshToken, options)
+}
+
+function deleteTokenCookies(c: Context<HonoEnv>) {
+	deleteCookie(c, 'accessToken')
+	deleteCookie(c, 'refreshToken')
 }
