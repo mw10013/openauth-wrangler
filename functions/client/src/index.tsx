@@ -59,19 +59,20 @@ export default {
 			c.set('client', client)
 			c.set('redirectUri', new URL(c.req.url).origin + '/callback')
 			const { access_token, refresh_token } = getCookie(c)
-			console.log({ access_token, refresh_token })
 			if (access_token && refresh_token) {
 				const verified = await client.verify(subjects, access_token, {
 					refresh: refresh_token,
 					fetch: (input, init) => env.WORKER.fetch(input, init),
 				})
-				if (!verified.err) {
+				if (verified.err) {
+					deleteCookie(c, 'access_token')
+					deleteCookie(c, 'refresh_token')
+				} else {
 					c.set('verifyResult', verified)
 				}
 			}
 			await next()
 			if (c.var.verifyResult?.tokens) {
-				console.log({ log: 'Saving tokens', verifyResult: c.var.verifyResult })
 				setSession(c.res, c.var.verifyResult.tokens.access, c.var.verifyResult.tokens.refresh)
 			}
 		})

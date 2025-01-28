@@ -13,6 +13,10 @@ async function getUser(email: string) {
 export default {
 	async fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		return issuer({
+			ttl: {
+				access: 60 * 5,
+				refresh: 60 * 15,
+			},
 			storage: CloudflareStorage({
 				namespace: env.KV,
 			}),
