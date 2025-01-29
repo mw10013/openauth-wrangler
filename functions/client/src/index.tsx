@@ -50,19 +50,26 @@ export default {
 			}
 			await next()
 		})
-		app.get(
+		app.use(
 			'/*',
 			jsxRenderer(({ children }) => <Layout>{children}</Layout>),
 		)
-		app.get('/', (c) =>
-			c.render(
-				<div className="flex gap-2">
-					<VerifyResultCard />
-					<CookiesCard />
-				</div>,
-			),
-		)
-		app.get('/public', (c) => c.render('Public'))
+
+		app.get('/', (c) => c.render(<Home />))
+		app.get('/public', (c) => c.render(<Public />))
+		app.post('/public', async (c) => {
+			const formData = await c.req.formData()
+
+			const value = formData.get('value')
+			console.log({ log: 'post: /public', value })
+			if (typeof value === 'string' && value) {
+				await setSignedCookie(c, 'testCookie', 'value', c.env.COOKIE_SECRET)
+			} else {
+				// delete cookie
+			}
+
+			return c.render(<Public />)
+		})
 		app.get('/protected', (c) => c.render('Protected'))
 		app.get('/authorize', async (c) => {
 			if (c.var.verifyResult) {
@@ -89,21 +96,13 @@ export default {
 				return new Response(e.toString())
 			}
 		})
-		app.get('public/get-cookie', async (c) => {
-			const cookieValue = await getSignedCookie(c, 'testCookie', c.env.COOKIE_SECRET)
-			return c.render(<pre>{JSON.stringify({ cookieValue }, null, 2)}</pre>)
-		})
-		app.get('/public/set-cookie', async (c) => {
-			await setSignedCookie(c, 'testCookie', 'value', c.env.COOKIE_SECRET, { path: '/' })
-			return c.render('Cookie set')
-		})
 		return app.fetch(request, env, ctx)
 	},
 } satisfies ExportedHandler<Env>
 
 const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
 	const ctx = useRequestContext<HonoEnv>()
-	const ListItems = memo(() => (
+	const ListItems = () => (
 		<>
 			<li>
 				<a href="/public">Public</a>
@@ -111,14 +110,8 @@ const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
 			<li>
 				<a href="/protected">Protected</a>
 			</li>
-			<li>
-				<a href="/public/set-cookie">Set Cookie</a>
-			</li>
-			<li>
-				<a href="/public/get-cookie">Get Cookie</a>
-			</li>
 		</>
-	))
+	)
 	return (
 		<html>
 			<head>
@@ -166,6 +159,43 @@ const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
 				<div className="p-6">{children}</div>
 			</body>
 		</html>
+	)
+}
+
+const Home: FC = () => (
+	<div className="flex gap-2">
+		<VerifyResultCard />
+		<CookiesCard />
+	</div>
+)
+
+const Public: FC = async () => {
+	const c = useRequestContext<HonoEnv>()
+	const cookieValue = await getSignedCookie(c, 'testCookie', c.env.COOKIE_SECRET)
+	return (
+		<div>
+			Public
+			<div className="flex gap-2">
+				<div className="card bg-base-100 w-96 shadow-sm">
+					<form action="/public" method="post">
+						<div className="card-body">
+							<h2 className="card-title">Cookie</h2>
+							<p>Current value is '{cookieValue}'</p>
+							<fieldset className="fieldset">
+								<legend className="fieldset-legend">Value</legend>
+								<input type="text" name="value" className="input" />
+							</fieldset>
+							<div className="card-actions justify-end">
+								<button type="submit" className="btn btn-primary">
+									Set
+								</button>
+							</div>
+						</div>
+					</form>
+				</div>
+				<CookiesCard />
+			</div>
+		</div>
 	)
 }
 
