@@ -2,7 +2,8 @@ import type { FC, PropsWithChildren } from 'hono/jsx'
 import { Client, createClient, VerifyResult } from '@openauthjs/openauth/client'
 import { subjects } from '@repo/shared/subjects'
 import { Context, Hono } from 'hono'
-import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
+import { deleteCookie, getCookie, getSignedCookie, setSignedCookie } from 'hono/cookie'
+import { memo } from 'hono/jsx'
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 
 type HonoEnv = {
@@ -25,7 +26,8 @@ export default {
 			})
 			c.set('client', client)
 			c.set('redirectUri', new URL(c.req.url).origin + '/callback')
-			const { accessToken, refreshToken } = getCookie(c)
+			const { accessToken, refreshToken } = await getTokenCookies(c)
+			console.log({ accessToken, refreshToken })
 			if (accessToken && refreshToken) {
 				const verified = await client.verify(subjects, accessToken, {
 					refresh: refreshToken,
@@ -37,10 +39,9 @@ export default {
 					c.set('verifyResult', verified)
 				}
 			}
-			console.log({ env: c.env, var: c.var })
 			await next()
 			if (c.var.verifyResult?.tokens) {
-				setTokenCookies(c, c.var.verifyResult.tokens.access, c.var.verifyResult.tokens.refresh)
+				await setTokenCookies(c, c.var.verifyResult.tokens.access, c.var.verifyResult.tokens.refresh)
 			}
 		})
 		app.use('/protected/*', async (c, next) => {
@@ -53,8 +54,15 @@ export default {
 			'/*',
 			jsxRenderer(({ children }) => <Layout>{children}</Layout>),
 		)
-		app.get('/', (c) => c.render(<VerifyResultCard />))
-		app.get('/public', (c) => c.render(<CookiesCard />))
+		app.get('/', (c) =>
+			c.render(
+				<div className="flex gap-2">
+					<VerifyResultCard />
+					<CookiesCard />
+				</div>,
+			),
+		)
+		app.get('/public', (c) => c.render('Public'))
 		app.get('/protected', (c) => c.render('Protected'))
 		app.get('/authorize', async (c) => {
 			if (c.var.verifyResult) {
@@ -75,11 +83,19 @@ export default {
 				if (!code) throw new Error('Missing code')
 				const exchanged = await c.var.client.exchange(code, c.var.redirectUri)
 				if (exchanged.err) throw exchanged.err
-				setTokenCookies(c, exchanged.tokens.access, exchanged.tokens.refresh)
+				await setTokenCookies(c, exchanged.tokens.access, exchanged.tokens.refresh)
 				return c.redirect('/')
 			} catch (e: any) {
 				return new Response(e.toString())
 			}
+		})
+		app.get('public/get-cookie', async (c) => {
+			const cookieValue = await getSignedCookie(c, 'testCookie', c.env.COOKIE_SECRET)
+			return c.render(<pre>{JSON.stringify({ cookieValue }, null, 2)}</pre>)
+		})
+		app.get('/public/set-cookie', async (c) => {
+			await setSignedCookie(c, 'testCookie', 'value', c.env.COOKIE_SECRET, { path: '/' })
+			return c.render('Cookie set')
 		})
 		return app.fetch(request, env, ctx)
 	},
@@ -87,12 +103,28 @@ export default {
 
 const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
 	const ctx = useRequestContext<HonoEnv>()
+	const ListItems = memo(() => (
+		<>
+			<li>
+				<a href="/public">Public</a>
+			</li>
+			<li>
+				<a href="/protected">Protected</a>
+			</li>
+			<li>
+				<a href="/public/set-cookie">Set Cookie</a>
+			</li>
+			<li>
+				<a href="/public/get-cookie">Get Cookie</a>
+			</li>
+		</>
+	))
 	return (
 		<html>
 			<head>
 				<meta charset="UTF-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-				<link href="./tailwind.css" rel="stylesheet" />
+				<link href="/tailwind.css" rel="stylesheet" />
 				<title>OpenAUTH Client</title>
 			</head>
 			<body>
@@ -105,12 +137,7 @@ const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
 								</svg>
 							</div>
 							<ul tabIndex={0} class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow">
-								<li>
-									<a href="/public">Public</a>
-								</li>
-								<li>
-									<a href="/protected">Protected</a>
-								</li>
+								<ListItems />
 							</ul>
 						</div>
 						<a href="/" className="btn btn-ghost text-xl">
@@ -119,12 +146,7 @@ const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
 					</div>
 					<div className="navbar-center hidden lg:flex">
 						<ul className="menu menu-horizontal px-1">
-							<li>
-								<a href="/public">Public</a>
-							</li>
-							<li>
-								<a href="/protected">Protected</a>
-							</li>
+							<ListItems />
 						</ul>
 					</div>
 					<div className="navbar-end">
@@ -181,19 +203,30 @@ const CookiesCard: FC = () => {
 	)
 }
 
-function setTokenCookies(c: Context<HonoEnv>, accessToken: string, refreshToken: string) {
+async function getTokenCookies(c: Context<HonoEnv>) {
+	return {
+		accessToken: await getSignedCookie(c, 'accessToken', c.env.COOKIE_SECRET),
+		refreshToken: await getSignedCookie(c, 'refreshToken', c.env.COOKIE_SECRET),
+	}
+}
+
+async function setTokenCookies(c: Context<HonoEnv>, accessToken: string, refreshToken: string) {
 	const options = {
 		path: '/',
-		secure: true,
+		secure: c.env.ENVIRONMENT !== 'local',
 		httpOnly: true,
 		maxAge: 60 * 5,
 		sameSite: 'Strict',
 	} as const
-	setCookie(c, 'accessToken', accessToken, options)
-	setCookie(c, 'refreshToken', refreshToken, options)
+	console.log({ log: 'setTokenCookies', accessToken, refreshToken, options })
+	await setSignedCookie(c, 'accessToken', accessToken, c.env.COOKIE_SECRET, options)
+	await setSignedCookie(c, 'refreshToken', refreshToken, c.env.COOKIE_SECRET, options)
 }
 
 function deleteTokenCookies(c: Context<HonoEnv>) {
-	deleteCookie(c, 'accessToken')
-	deleteCookie(c, 'refreshToken')
+	const options = {
+		secure: true,
+	}
+	deleteCookie(c, 'accessToken', options)
+	deleteCookie(c, 'refreshToken', options)
 }
