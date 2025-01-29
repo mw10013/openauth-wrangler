@@ -3,6 +3,7 @@
 interface Env {
 	ENVIRONMENT: "local" | "staging" | "production";
 	OPENAUTH_ISSUER: "http://localhost:8788" | "https://openauth-wrangler-worker-staging.devxo.workers.dev" | "https://openauth-wrangler-worker-production.devxo.workers.dev";
+	COOKIE_SECRET: string;
 	WORKER: Fetcher;
 	ASSETS: Fetcher;
 }

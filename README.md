@@ -2,6 +2,7 @@
 
 ## Local Dev
 
+- cp functions/client/.dev.vars.example functions/client/.dev.vars
 - pnpm -F worker dev
 - pnpm -F client tailwind
 - pnpm -F client dev
@@ -19,6 +20,7 @@
     - Include paths: functions/worker/* functions/shared/*
 - pnpm -F client build
 - pnpm -F client exec wrangler deploy --env production
+- pnpm -F client exec wrangler secret put COOKIE_SECRET --env production
 - Workers & Pages Settings: openauth-wrangler-client-production
   - Git repository: connect to git repo
   - Build configuration

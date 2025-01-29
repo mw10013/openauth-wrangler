@@ -6,8 +6,8 @@ import { deleteCookie, getCookie, setCookie } from 'hono/cookie'
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 
 type HonoEnv = {
+	Bindings: Env
 	Variables: {
-		cfEnv: Env
 		client: Client
 		redirectUri: string
 		verifyResult?: VerifyResult<typeof subjects>
@@ -18,11 +18,10 @@ export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const app = new Hono<HonoEnv>()
 		app.use(async (c, next) => {
-			c.set('cfEnv', env)
 			const client = createClient({
 				clientID: 'client',
-				issuer: env.OPENAUTH_ISSUER,
-				fetch: (input, init) => env.WORKER.fetch(input, init),
+				issuer: c.env.OPENAUTH_ISSUER,
+				fetch: (input, init) => c.env.WORKER.fetch(input, init),
 			})
 			c.set('client', client)
 			c.set('redirectUri', new URL(c.req.url).origin + '/callback')
@@ -30,7 +29,7 @@ export default {
 			if (accessToken && refreshToken) {
 				const verified = await client.verify(subjects, accessToken, {
 					refresh: refreshToken,
-					fetch: (input, init) => env.WORKER.fetch(input, init),
+					fetch: (input, init) => c.env.WORKER.fetch(input, init),
 				})
 				if (verified.err) {
 					deleteTokenCookies(c)
@@ -38,6 +37,7 @@ export default {
 					c.set('verifyResult', verified)
 				}
 			}
+			console.log({ env: c.env, var: c.var })
 			await next()
 			if (c.var.verifyResult?.tokens) {
 				setTokenCookies(c, c.var.verifyResult.tokens.access, c.var.verifyResult.tokens.refresh)
@@ -184,7 +184,7 @@ const CookiesCard: FC = () => {
 function setTokenCookies(c: Context<HonoEnv>, accessToken: string, refreshToken: string) {
 	const options = {
 		path: '/',
-		secure: c.var.cfEnv.ENVIRONMENT != 'local',
+		secure: true,
 		httpOnly: true,
 		maxAge: 60 * 5,
 		sameSite: 'Strict',
