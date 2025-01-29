@@ -173,7 +173,7 @@ const Home: FC = () => (
 const Public: FC = async () => {
 	const c = useRequestContext<HonoEnv>()
 	const testCookie = getCookie(c, 'testCookie')
-	const testCookieSecure = await getSignedCookie(c, 'testCookieSecure', c.env.COOKIE_SECRET)
+	const testCookieSecure = await getSignedCookie(c, c.env.COOKIE_SECRET, 'testCookieSecure')
 	const testCookieSecureRaw = getCookie(c, 'testCookieSecure')
 	return (
 		<div>
@@ -240,20 +240,19 @@ const CookiesCard: FC = () => {
 
 async function getTokenCookies(c: Context<HonoEnv>) {
 	return {
-		accessToken: await getSignedCookie(c, 'accessToken', c.env.COOKIE_SECRET),
-		refreshToken: await getSignedCookie(c, 'refreshToken', c.env.COOKIE_SECRET),
+		accessToken: await getSignedCookie(c, c.env.COOKIE_SECRET, 'accessToken'),
+		refreshToken: await getSignedCookie(c, c.env.COOKIE_SECRET, 'refreshToken'),
 	}
 }
 
 async function setTokenCookies(c: Context<HonoEnv>, accessToken: string, refreshToken: string) {
 	const options = {
 		path: '/',
-		secure: c.env.ENVIRONMENT !== 'local',
+		secure: true,
 		httpOnly: true,
 		maxAge: 60 * 5,
 		sameSite: 'Strict',
 	} as const
-	console.log({ log: 'setTokenCookies', accessToken, refreshToken, options })
 	await setSignedCookie(c, 'accessToken', accessToken, c.env.COOKIE_SECRET, options)
 	await setSignedCookie(c, 'refreshToken', refreshToken, c.env.COOKIE_SECRET, options)
 }
