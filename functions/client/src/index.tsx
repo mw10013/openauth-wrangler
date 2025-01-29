@@ -63,7 +63,7 @@ export default {
 			const { url } = await c.var.client.authorize(c.var.redirectUri, 'code')
 			return c.redirect(url)
 		})
-		app.get('/signout', (c) => {
+		app.post('/signout', (c) => {
 			c.set('verifyResult', undefined)
 			deleteTokenCookies(c)
 			return c.redirect('/')
@@ -129,9 +129,11 @@ const Layout: FC<PropsWithChildren<{}>> = ({ children }) => {
 					</div>
 					<div className="navbar-end">
 						{ctx.var.verifyResult ? (
-							<a href="/signout" className="btn">
-								Sign Out
-							</a>
+							<form action="/signout" method="post">
+								<button type="submit" className="btn">
+									Sign Out
+								</button>
+							</form>
 						) : (
 							<a href="/authorize" className="btn">
 								Sign In / Up
