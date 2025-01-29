@@ -2,7 +2,7 @@ import type { FC, PropsWithChildren } from 'hono/jsx'
 import { Client, createClient, VerifyResult } from '@openauthjs/openauth/client'
 import { subjects } from '@repo/shared/subjects'
 import { Context, Hono } from 'hono'
-import { deleteCookie, getCookie, getSignedCookie, setSignedCookie } from 'hono/cookie'
+import { deleteCookie, getCookie, getSignedCookie, setCookie, setSignedCookie } from 'hono/cookie'
 import { memo } from 'hono/jsx'
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 
@@ -63,12 +63,13 @@ export default {
 			const value = formData.get('value')
 			console.log({ log: 'post: /public', value })
 			if (typeof value === 'string' && value) {
-				await setSignedCookie(c, 'testCookie', 'value', c.env.COOKIE_SECRET)
+				setCookie(c, 'testCookie', value)
+				await setSignedCookie(c, 'testCookieSecure', value, c.env.COOKIE_SECRET)
 			} else {
 				// delete cookie
 			}
 
-			return c.render(<Public />)
+			return c.redirect('/public')
 		})
 		app.get('/protected', (c) => c.render('Protected'))
 		app.get('/authorize', async (c) => {
@@ -171,7 +172,9 @@ const Home: FC = () => (
 
 const Public: FC = async () => {
 	const c = useRequestContext<HonoEnv>()
-	const cookieValue = await getSignedCookie(c, 'testCookie', c.env.COOKIE_SECRET)
+	const testCookie = getCookie(c, 'testCookie')
+	const testCookieSecure = await getSignedCookie(c, 'testCookieSecure', c.env.COOKIE_SECRET)
+	const testCookieSecureRaw = getCookie(c, 'testCookieSecure')
 	return (
 		<div>
 			Public
@@ -180,7 +183,9 @@ const Public: FC = async () => {
 					<form action="/public" method="post">
 						<div className="card-body">
 							<h2 className="card-title">Cookie</h2>
-							<p>Current value is '{cookieValue}'</p>
+							<p>testCookie: '{testCookie}'</p>
+							<p>testCookieSecure: '{testCookieSecure}'</p>
+							<p>testCookieSecureRaw: '{testCookieSecureRaw}'</p>
 							<fieldset className="fieldset">
 								<legend className="fieldset-legend">Value</legend>
 								<input type="text" name="value" className="input" />
