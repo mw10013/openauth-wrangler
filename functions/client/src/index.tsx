@@ -2,8 +2,7 @@ import type { FC, PropsWithChildren } from 'hono/jsx'
 import { Client, createClient, VerifyResult } from '@openauthjs/openauth/client'
 import { subjects } from '@repo/shared/subjects'
 import { Context, Hono } from 'hono'
-import { deleteCookie, getCookie, getSignedCookie, setCookie, setSignedCookie } from 'hono/cookie'
-import { memo } from 'hono/jsx'
+import { deleteCookie, getCookie, getSignedCookie, setSignedCookie } from 'hono/cookie'
 import { jsxRenderer, useRequestContext } from 'hono/jsx-renderer'
 
 type HonoEnv = {
@@ -27,7 +26,6 @@ export default {
 			c.set('client', client)
 			c.set('redirectUri', new URL(c.req.url).origin + '/callback')
 			const { accessToken, refreshToken } = await getTokenCookies(c)
-			console.log({ accessToken, refreshToken })
 			if (accessToken && refreshToken) {
 				const verified = await client.verify(subjects, accessToken, {
 					refresh: refreshToken,
@@ -56,21 +54,7 @@ export default {
 		)
 
 		app.get('/', (c) => c.render(<Home />))
-		app.get('/public', (c) => c.render(<Public />))
-		app.post('/public', async (c) => {
-			const formData = await c.req.formData()
-
-			const value = formData.get('value')
-			console.log({ log: 'post: /public', value })
-			if (typeof value === 'string' && value) {
-				setCookie(c, 'testCookie', value)
-				await setSignedCookie(c, 'testCookieSecure', value, c.env.COOKIE_SECRET)
-			} else {
-				// delete cookie
-			}
-
-			return c.redirect('/public')
-		})
+		app.get('/public', (c) => c.render('Public'))
 		app.get('/protected', (c) => c.render('Protected'))
 		app.get('/authorize', async (c) => {
 			if (c.var.verifyResult) {
@@ -169,40 +153,6 @@ const Home: FC = () => (
 		<CookiesCard />
 	</div>
 )
-
-const Public: FC = async () => {
-	const c = useRequestContext<HonoEnv>()
-	const testCookie = getCookie(c, 'testCookie')
-	const testCookieSecure = await getSignedCookie(c, c.env.COOKIE_SECRET, 'testCookieSecure')
-	const testCookieSecureRaw = getCookie(c, 'testCookieSecure')
-	return (
-		<div>
-			Public
-			<div className="flex gap-2">
-				<div className="card bg-base-100 w-96 shadow-sm">
-					<form action="/public" method="post">
-						<div className="card-body">
-							<h2 className="card-title">Cookie</h2>
-							<p>testCookie: '{testCookie}'</p>
-							<p>testCookieSecure: '{testCookieSecure}'</p>
-							<p>testCookieSecureRaw: '{testCookieSecureRaw}'</p>
-							<fieldset className="fieldset">
-								<legend className="fieldset-legend">Value</legend>
-								<input type="text" name="value" className="input" />
-							</fieldset>
-							<div className="card-actions justify-end">
-								<button type="submit" className="btn btn-primary">
-									Set
-								</button>
-							</div>
-						</div>
-					</form>
-				</div>
-				<CookiesCard />
-			</div>
-		</div>
-	)
-}
 
 const VerifyResultCard: FC = () => {
 	const ctx = useRequestContext<HonoEnv>()

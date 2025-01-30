@@ -1,5 +1,7 @@
 # openauth-wrangler
 
+OpenAuth server and client example using wrangler for local dev and deployment.
+
 ## Local Dev
 
 - cp functions/client/.dev.vars.example functions/client/.dev.vars
@@ -35,11 +37,7 @@
 - Workers & Pages Settings: openauth-wrangler-worker-staging/openauth-wrangler-client-production
   - Branch control: staging
 
-## pnpm
-
-- pnpm list -r typescript
-
-## Node version for build and scripts
+## Node version for build
 
 - See .node-version in root.
 - https://github.com/shadowspawn/node-version-usage
