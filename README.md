@@ -30,6 +30,7 @@ OpenAuth server and client example using wrangler for local dev and deployment.
     - Deploy command: pnpm -F client exec wrangler deploy --env production
   - Build watch paths
     - Include paths: functions/client/* functions/shared/*
+- pnpm -F worker exec wrangler tail openauth-wrangler-worker-production
 
 ## Deploy (staging)
 

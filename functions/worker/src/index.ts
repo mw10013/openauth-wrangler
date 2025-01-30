@@ -21,10 +21,10 @@ export default {
 				code: CodeProvider(
 					CodeUI({
 						copy: {
-							code_info: "We'll send a pin code to your email"
+							code_placeholder: 'Code (check Worker logs)',
 						},
-						sendCode: async (claims, code) => console.log(claims.email, code)
-					})
+						sendCode: async (claims, code) => console.log(claims.email, code),
+					}),
 				),
 				password: PasswordProvider(
 					PasswordUI({
